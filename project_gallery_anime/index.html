@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="image-track" data-mouse-down-at="0" data-prev-percentage="0">
+      <img
+        src="images/portfolio-7.png"
+        alt="item1"
+        class="image"
+        draggable="false"
+      />
+      <img
+        src="images/portfolio-1.jpg"
+        alt="item2"
+        class="image"
+        draggable="false"
+      />
+      <img
+        src="images/portfolio-2.jpg"
+        alt="item3"
+        class="image"
+        draggable="false"
+      />
+      <img
+        src="images/portfolio-3.jpg"
+        alt="item4"
+        class="image"
+        draggable="false"
+      />
+      <img
+        src="images/portfolio-4.jpg"
+        alt="item5"
+        class="image"
+        draggable="false"
+      />
+      <img
+        src="images/portfolio-5.png"
+        alt="item6"
+        class="image"
+        draggable="false"
+      />
+      <img
+        src="images/portfolio-6.png"
+        alt="item7"
+        class="image"
+        draggable="false"
+      />
+    </div>
+    <script>
+      const track = document.getElementById("image-track");
+
+      const handleOnDown = (e) => (track.dataset.mouseDownAt = e.clientX);
+
+      const handleOnUp = () => {
+        track.dataset.mouseDownAt = "0";
+        track.dataset.prevPercentage = track.dataset.percentage;
+      };
+
+      const handleOnMove = (e) => {
+        if (track.dataset.mouseDownAt === "0") return;
+
+        const mouseDelta = parseFloat(track.dataset.mouseDownAt) - e.clientX,
+          maxDelta = window.innerWidth / 2;
+
+        const percentage = (mouseDelta / maxDelta) * -100,
+          nextPercentageUnconstrained =
+            parseFloat(track.dataset.prevPercentage) + percentage,
+          nextPercentage = Math.max(
+            Math.min(nextPercentageUnconstrained, 0),
+            -100
+          );
+
+        track.dataset.percentage = nextPercentage;
+
+        track.animate(
+          {
+            transform: `translate(${nextPercentage}%, -50%)`,
+          },
+          { duration: 1200, fill: "forwards" }
+        );
+
+        for (const image of track.getElementsByClassName("image")) {
+          image.animate(
+            {
+              objectPosition: `${100 + nextPercentage}% center`,
+            },
+            { duration: 1200, fill: "forwards" }
+          );
+        }
+      };
+
+      /* -- Had to add extra lines for touch events -- */
+
+      window.onmousedown = (e) => handleOnDown(e);
+
+      window.ontouchstart = (e) => handleOnDown(e.touches[0]);
+
+      window.onmouseup = (e) => handleOnUp(e);
+
+      window.ontouchend = (e) => handleOnUp(e.touches[0]);
+
+      window.onmousemove = (e) => handleOnMove(e);
+
+      window.ontouchmove = (e) => handleOnMove(e.touches[0]);
+
+      // Add new function to handle double click
+      const handleDoubleClick = (e) => {
+        const track = document.getElementById("image-track");
+        track.classList.toggle("minimized");
+
+        // 重置位置和百分比数据
+        if (!track.classList.contains("minimized")) {
+          track.dataset.mouseDownAt = "0";
+          track.dataset.prevPercentage = track.dataset.percentage || "0";
+
+          // 重新应用transform
+          track.style.transform = `translate(${track.dataset.percentage}%, -50%)`;
+
+          // 重新应用所有图片的位置
+          for (const image of track.getElementsByClassName("image")) {
+            image.style.objectPosition = `${
+              100 + parseFloat(track.dataset.percentage)
+            }% center`;
+          }
+        }
+      };
+
+      // Add double click event listeners to all images
+      const images = track.getElementsByClassName("image");
+      for (const image of images) {
+        image.addEventListener("dblclick", handleDoubleClick);
+      }
+    </script>
+    <style>
+      body {
+        height: 100vh;
+        width: 100vw;
+        background-color: black;
+        display: flex;
+        margin: 0;
+        overflow: hidden;
+      }
+
+      #image-track > .image {
+        width: 50vmin;
+        height: 56vmin;
+        object-fit: cover;
+        object-position: 100% center;
+      }
+
+      #image-track {
+        display: flex;
+        gap: 4vmin;
+        position: absolute;
+        left: 60%;
+        top: 50%;
+        transform: translate(0%, -50%);
+        user-select: none; /* prevent image highlight */
+        cursor: grab;
+      }
+
+      /* Add new styles for minimized state */
+      #image-track.minimized {
+        left: auto;
+        right: 2vmin;
+        bottom: 2vmin;
+        top: auto;
+        transform: scale(0.2) !important;
+        transform-origin: bottom right;
+        transition: all 0.3s ease;
+      }
+
+      /* Add hover effect for better UX */
+      #image-track.minimized:hover {
+        transform: scale(0.25) !important;
+      }
+    </style>
+  </body>
+</html>
