@@ -6,6 +6,7 @@
     <title>Document</title>
   </head>
   <body>
+    <div id="selected-image" style="display: none"></div>
     <div id="image-track" data-mouse-down-at="0" data-prev-percentage="0">
       <img
         src="images/portfolio-7.png"
@@ -109,8 +110,24 @@
 
       // Add new function to handle double click
       const handleDoubleClick = (e) => {
+        console.log("double click");
         const track = document.getElementById("image-track");
+        const selectedImageDiv = document.getElementById("selected-image");
+
         track.classList.toggle("minimized");
+
+        if (track.classList.contains("minimized")) {
+          // 如果是缩小状态，显示被点击的图片
+          const clickedImage = e.target;
+          if (clickedImage.tagName === "IMG") {
+            selectedImageDiv.innerHTML = `<img src="${clickedImage.src}" alt="${clickedImage.alt}">`;
+            selectedImageDiv.style.display = "block";
+          }
+        } else {
+          // 如果不是缩小状态，隐藏选中的图片
+          selectedImageDiv.style.display = "none";
+          selectedImageDiv.innerHTML = "";
+        }
 
         // 重置位置和百分比数据
         if (!track.classList.contains("minimized")) {
@@ -129,11 +146,48 @@
         }
       };
 
-      // Add double click event listeners to all images
+      // 添加触摸相关的双击处理
+      let lastTap = 0;
+      const handleTouchTap = (e) => {
+        const currentTime = new Date().getTime();
+        const tapLength = currentTime - lastTap;
+
+        if (tapLength < 500 && tapLength > 0) {
+          // 双击被触发
+          handleDoubleClick(e);
+          e.preventDefault(); // 防止默认行为
+        }
+        lastTap = currentTime;
+      };
+
+      // 修改事件监听部分
       const images = track.getElementsByClassName("image");
       for (const image of images) {
         image.addEventListener("dblclick", handleDoubleClick);
+        image.addEventListener("touchend", handleTouchTap); // 添加触摸事件监听
       }
+
+      // 添加 selected-image 的样式
+      const styleElement = document.createElement("style");
+      styleElement.textContent = `
+        #selected-image {
+          position: fixed;
+          top: 10vh;
+          left: 10vw;
+          width: 80vw;
+          height: 80vh;
+          display: none;
+          z-index: 1;
+          background: black;
+        }
+        
+        #selected-image img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+        }
+      `;
+      document.head.appendChild(styleElement);
     </script>
     <style>
       body {
@@ -143,6 +197,7 @@
         display: flex;
         margin: 0;
         overflow: hidden;
+        position: fixed;
       }
 
       #image-track > .image {
@@ -168,15 +223,47 @@
         left: auto;
         right: 2vmin;
         bottom: 2vmin;
+        position: fixed;
         top: auto;
         transform: scale(0.2) !important;
         transform-origin: bottom right;
         transition: all 0.3s ease;
+        z-index: 100;
       }
 
       /* Add hover effect for better UX */
       #image-track.minimized:hover {
         transform: scale(0.25) !important;
+      }
+
+      /* 添加媒体查询适配手机屏幕 */
+      @media (max-width: 768px) {
+        #image-track > .image {
+          width: 70vmin; /* 在手机上增加图片宽度 */
+          height: 80vmin;
+        }
+
+        #image-track {
+          left: 50%; /* 调整起始位置 */
+          gap: 3vmin; /* 减小图片间距 */
+        }
+
+        #image-track.minimized {
+          right: 1vmin; /* 缩小状态时调整位置 */
+          bottom: 1vmin;
+          transform: scale(0.15) !important; /* 在手机上缩得更小一些 */
+        }
+
+        #image-track.minimized:hover {
+          transform: scale(0.18) !important;
+        }
+      }
+
+      /* 添加触摸优化 */
+      @media (hover: none) and (pointer: coarse) {
+        #image-track.minimized {
+          transform: scale(0.15) !important;
+        }
       }
     </style>
   </body>
